@@ -1,0 +1,188 @@
+#
+# Script Name: data_pulls.py
+# Author: Brian Cain
+
+# The purpose of this script is to define functions that handle
+# all pulls from the datasource https://collegefootballdata.com/.
+# This includes api authorization/requests, dataframe creation,
+# datafile creation, and data specification.
+
+##Import packages necessary for pulling in data and data storage creation
+import requests
+import pandas as pd
+
+
+##Define function to grab api data from CollegeFootballData.com
+def getData(url,access_token):
+
+    resp = requests.get(url,
+                        headers={'Authorization':'Bearer {}'.format(access_token)})
+
+    ##Assess if the data pull worked correcltly (if not trigger API error code)
+    if resp.status_code == 200:
+        apiData = resp.json()
+        return apiData
+    else:
+        raise NameError('API Error, Reponse:' + str(resp.status_code))
+
+##FUNCTIONS CREATING/EDITING DATAFRAMES----------
+
+##Define function that creates a dataframe for raw data to be entered into (Applies to first API pull)
+def createRaw_df(data,colNames,dataTypes):
+
+    ##Assemble data types and corresponding columns
+    if dataTypes != False:
+        dataTypes_input = [(x,y) for x in colNames for y in dataTypes]
+    else:
+        dataTypes_input = None
+
+    ##Create dataframe
+    df = pd.DataFrame(data,columns=colNames,
+                           dtype=dataTypes_input)
+
+    return df
+
+##Define function that appends raw data to existing dataframe (Applies to all succeeding API pulls)
+def appendRaw_df(originalDf,data,colNames):
+
+    ##Create new dataframe with new data and stack it onto original ddataframe
+    additionalDf = pd.DataFrame(data,columns=colNames)
+    newDf = originalDf.append(additionalDf, ignore_index=False)
+
+    return newDf
+
+##FUNCTIONS PULLING IN VARIOUS DATAPOINTS----------
+
+
+##Define function that pulls in data on individual FBS teams
+def obtainTeam_data(url,access_token):
+
+    jsonData_team = getData(url,access_token)
+
+    teamData = []
+    for i in jsonData_team:
+        dataEntry = []
+        i.pop('location')
+        colNames = list(i.keys())
+        for j in colNames:
+            dataEntry.append(i[j])
+        teamData.append(dataEntry)
+
+    colNames_team = list(jsonData_team[0].keys())
+    
+    return teamData, colNames_team
+
+
+##Define function that pulls in game data
+def obtainGame_data(url,access_token,week_num):
+
+    jsonGame_data = getData(url,access_token)
+
+    gameData = []
+    for i in jsonGame_data:
+
+        gameId = i['id']
+        gameWeek = int(week_num)
+        gameSeason = i['season']
+        gameDate = i['start_date']
+        homeTeam_id = i['home_id']
+        awayTeam_id = i['away_id']
+        homePoints = i['home_points']
+        awayPoints = i['away_points']
+        homeQuarterly_points = i['home_line_scores'] 
+        awayQuarterly_points = i['away_line_scores']
+        home_elo = i['home_pregame_elo']
+        away_elo = i['away_pregame_elo']
+        home_homeBool, away_homeBool = 1, 0
+        
+        homeData = [gameId,gameWeek,gameSeason,homeTeam_id,homePoints,homeQuarterly_points,home_elo,home_homeBool]
+        awayData = [gameId,gameWeek,gameSeason,awayTeam_id,awayPoints,awayQuarterly_points,away_elo,away_homeBool]
+        gameData.append(homeData)
+        gameData.append(awayData)
+
+    colNames_game = ['gameId','week_num','gameSeason','team_id','points','Quarterly_points','elo','homeBool']
+    
+    return gameData, colNames_game
+
+
+##Define function that gets individual game detailed stats
+def obtainStats_data(url,access_token,week_num):
+
+    ##Define a function to extract specified stat from API data
+    def extractStat(gameData,homeStatus,statName):
+
+        try:
+        
+            statValue = next(stat for stat in gameData['teams'][homeStatus]['stats'] if stat['category'] == statName)['stat'] ##returns 0 if stat is not available, indicating stat is 0
+
+        except:
+
+            statValue = 0
+
+        return statValue
+
+    jsonStats_data = getData(url,access_token)
+
+    statsData = []
+    for i in jsonStats_data:
+        
+        gameId = i['id']
+        homeSchool = i['teams'][0]['school']
+        awaySchool = i['teams'][1]['school']
+        home_rush_td, away_rush_td = extractStat(i, 0,'rushingTDs'), extractStat(i, 1,'rushingTDs')
+        home_pass_td, away_pass_td = extractStat(i, 0,'passingTDs'), extractStat(i, 1,'passingTDs')
+        home_rush_attempt, away_rush_attempt = extractStat(i, 0,'rushingAttempts'), extractStat(i, 1,'rushingAttempts')
+        home_yp_rush, away_yp_rush = extractStat(i, 0,'yardsPerRushAttempt'), extractStat(i, 1,'yardsPerRushAttempt')
+        home_yp_pass, away_yp_pass = extractStat(i, 0,'yardsPerPass'), extractStat(i, 1,'yardsPerPass')
+        home_rush_yards, away_rush_yards = extractStat(i, 0,'rushingYards'), extractStat(i, 1,'rushingYards')
+        home_completion_attempts, away_completion_attempts = str(extractStat(i, 0,'completionAttempts')), str(extractStat(i, 1,'completionAttempts'))
+        home_pass_yards, away_pass_yards = extractStat(i, 0,'netPassingYards'), extractStat(i, 1,'netPassingYards')
+        home_total_yards, away_total_yards = extractStat(i, 0,'totalYards'), extractStat(i, 1,'totalYards')
+        home_turnovers, away_turnovers = extractStat(i, 0,'turnovers'), extractStat(i, 1,'turnovers')
+        home_homeBool, away_homeBool = 1, 0
+
+        homeData = [gameId,week_num,homeSchool,home_rush_td,home_pass_td,home_rush_attempt,
+                    home_yp_rush,home_rush_yards,home_yp_pass,home_completion_attempts,
+                    home_pass_yards,home_total_yards,home_turnovers,home_homeBool]
+        awayData = [gameId,week_num,awaySchool,away_rush_td,away_pass_td,away_rush_attempt,
+                    away_yp_rush,away_rush_yards,away_yp_pass,away_completion_attempts,
+                    away_pass_yards,away_total_yards,away_turnovers,away_homeBool]
+
+        if len([float(i) for i in homeData[3:9]+homeData[10:13] if float(i) == 0]) == 9 or len([float(i) for i in awayData[3:9]+awayData[10:13] if float(i) == 0]) == 9:
+            continue ##Skips to next iteration because game stats were not available
+
+        statsData.append(homeData)
+        statsData.append(awayData)
+
+    colNames_stats = ['gameId','week_num','school','rush_td','pass_td','rush_attempt','yp_rush','rush_yards',
+                      'yp_pass','completion_attempts','pass_yards','total_yards','turnovers','homeBool']
+
+    return statsData, colNames_stats
+
+#########Categories to add above
+### 'tacklesForLoss','defensiveTDs','tackles','sacks','qbHurries','passesDeflected','fumblesRecovered',
+### 'passesIntercepted', 'possessionTime', 'interceptions','fumblesLost','totalPenaltiesYards','fourthDownEff',
+### 'thirdDownEff', 'firstDowns'
+
+##Define function that pulls in team talent data
+def obtainTalent_data(url,access_token):
+
+    ##Theoretically you want the past 3 seasons talent indexes for each team
+
+    jsonTalent_data = getData(url,access_token)
+
+    talentData = []
+    for i in jsonTalent_data:
+
+        dataEntry = []
+        talentSeason = i['year']
+        talentTeam = i['team']
+        talentRank = i['rank']
+        talentPoints = i['points']
+        dataEntry = [talentSeason,talentTeam,talentRank,talentPoints]
+        talentData.append(dataEntry)
+
+    colNames_talent = ['season','team','rank','points']
+
+    return talentData, colNames_talent
+
