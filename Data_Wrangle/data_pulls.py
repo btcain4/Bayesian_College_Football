@@ -142,13 +142,12 @@ def obtainStats_data(url,access_token,week_num):
         home_tfl, away_tfl = extractStat(i, 0,'tacklesForLoss'), extractStat(i, 1,'tacklesForLoss')
         home_sacks, away_sacks = extractStat(i, 0,'sacks'), extractStat(i, 1,'sacks')
         home_qb_hurries, away_qb_hurries = extractStat(i, 0,'qbHurries'), extractStat(i, 1,'qbHurries')
-        home_passes_deflected, away_passes_deflected = extractStat(i, 0,'passesDeflected'), extractStat(i, 1,'passesDeflected')
         home_fumbles_lost, away_fumbles_lost = extractStat(i, 0,'fumblesLost'), extractStat(i, 1,'fumblesLost')
         home_interceptions, away_interceptions = extractStat(i, 0,'interceptions'), extractStat(i, 1,'interceptions')
-        home_possessionTime, away_possessionTime = extractStat(i, 0,'possessionTime'), extractStat(i, 1,'possessionTime')
-        home_penalty_yards, away_penalty_yards = extractStat(i, 0,'totalPenaltiesYards'), extractStat(i, 1,'totalPenaltiesYards')
-        home_fourthDown_eff, away_fourthDown_eff = extractStat(i, 0,'fourthDownEff'), extractStat(i, 1,'fourthDownEff')
-        home_thirdDown_eff, away_thirdDown_eff = extractStat(i, 0,'thirdDownEff'), extractStat(i, 1,'thirdDownEff')
+        home_possessionTime, away_possessionTime = str(extractStat(i, 0,'possessionTime')), str(extractStat(i, 1,'possessionTime'))
+        home_penalty_yards, away_penalty_yards = str(extractStat(i, 0,'totalPenaltiesYards')), str(extractStat(i, 1,'totalPenaltiesYards'))
+        home_fourthDown_eff, away_fourthDown_eff = str(extractStat(i, 0,'fourthDownEff')), str(extractStat(i, 1,'fourthDownEff'))
+        home_thirdDown_eff, away_thirdDown_eff = str(extractStat(i, 0,'thirdDownEff')), str(extractStat(i, 1,'thirdDownEff'))
         home_firstDowns, away_firstDowns = extractStat(i, 0,'firstDowns'), extractStat(i, 1,'firstDowns')
         home_defensive_td, away_defensive_td = extractStat(i, 0,'defensiveTDs'), extractStat(i, 1,'defensiveTDs')
         home_homeBool, away_homeBool = 1, 0
@@ -156,17 +155,17 @@ def obtainStats_data(url,access_token,week_num):
         homeData = [gameId,week_num,homeSchool,home_rush_td,home_pass_td,home_rush_attempt,
                     home_yp_rush,home_rush_yards,home_yp_pass,home_completion_attempts,
                     home_pass_yards,home_total_yards,home_turnovers,
-                    home_tfl,home_sacks,home_qb_hurries,home_passes_deflected,home_fumbles_lost,
-                    home_interceptions,home_possession_time,home_penalty_yards,home_fourthDown_eff,
+                    home_tfl,home_sacks,home_qb_hurries,home_fumbles_lost,
+                    home_interceptions,home_possessionTime,home_penalty_yards,home_fourthDown_eff,
                     home_thirdDown_eff,home_firstDowns,home_defensive_td,home_homeBool]
         awayData = [gameId,week_num,awaySchool,away_rush_td,away_pass_td,away_rush_attempt,
                     away_yp_rush,away_rush_yards,away_yp_pass,away_completion_attempts,
                     away_pass_yards,away_total_yards,away_turnovers,
-                    away_tfl,away_sacks,away_qb_hurries,away_passes_deflected,away_fumbles_lost,
-                    away_interceptions,away_possession_time,away_penalty_yards,away_fourthDown_eff,
+                    away_tfl,away_sacks,away_qb_hurries,away_fumbles_lost,
+                    away_interceptions,away_possessionTime,away_penalty_yards,away_fourthDown_eff,
                     away_thirdDown_eff,away_firstDowns,away_defensive_td,away_homeBool]
 
-        if len([float(i) for i in homeData[3:9]+homeData[10:19]+homeData[20:25] if float(i) == 0]) == 9 or len([float(i) for i in awayData[3:9]+awayData[10:13]+awayData[20:25] if float(i) == 0]) == 9:
+        if len([float(i) for i in homeData[3:9]+homeData[10:18]+homeData[22:24] if float(i) == 0]) == 17 or len([float(i) for i in awayData[3:9]+awayData[10:18]+awayData[22:24] if float(i) == 0]) == 17:
             continue ##Skips to next iteration because game stats were not available
 
         statsData.append(homeData)
@@ -174,7 +173,7 @@ def obtainStats_data(url,access_token,week_num):
 
     colNames_stats = ['gameId','week_num','school','rush_td','pass_td','rush_attempt','yp_rush','rush_yards',
                       'yp_pass','completion_attempts','pass_yards','total_yards','turnovers','tfl','sacks',
-                      'qb_hurries','passes_deflected','fumbles_lost','interceptions','possession_time','penalty_yards',
+                      'qb_hurries','fumbles_lost','interceptions','possession_time','penalty_yards',
                       'fourthDown_eff','thirdDown_eff','firstDowns','defensive_td','homeBool']
 
     return statsData, colNames_stats
@@ -213,17 +212,76 @@ def obtainMetrics_data(url,access_token,week_num):
         defensive_secondLevelYards = i['defensive']['secondLevelYards']
         defensive_openFieldYards = i['defensive']['openFieldYards']
 
-        data = [offensive_plays,offensive_drives,offensive_ppa,offensive_successRate,offensive_explosiveness,
+        data = [gameId,school,week_num,offensive_plays,offensive_drives,offensive_ppa,offensive_successRate,offensive_explosiveness,
                 offensive_powerSuccess,offensive_stuffRate,offensive_lineYards,offensive_secondLevelYards,offensive_openFieldYards,
                 defensive_plays,defensive_drives,defensive_ppa,defensive_successRate,defensive_explosiveness,
                 defensive_powerSuccess,defensive_stuffRate,defensive_lineYards,defensive_secondLevelYards,defensive_openFieldYards]
         metricsData.append(data)
 
-    colNames_metrics = ['offensive_plays','offensive_drives','offensive_ppa','offensive_successRate','offensive_explosiveness',
+    colNames_metrics = ['gameId','school','week_num','offensive_plays','offensive_drives','offensive_ppa','offensive_successRate','offensive_explosiveness',
                 'offensive_powerSuccess','offensive_stuffRate','offensive_lineYards','offensive_secondLevelYards','offensive_openFieldYards',
                 'defensive_plays','defensive_drives','defensive_ppa','defensive_successRate','defensive_explosiveness',
                 'defensive_powerSuccess','defensive_stuffRate','defensive_lineYards','defensive_secondLevelYards','defensive_openFieldYards']
     
     return metricsData, colNames_metrics
+
+##Invoke Commands to be run for initial setup of first dataframe dating from 2016-2019 (excludes 2020 for covid uncertainty)
+if __name__ == '__main__':
+
+    ##Define desired game seasons for data
+    seasons = ['2021']
+
+    ##Define college football API access token
+    access_token = 'u4vJ9lDynYocZefociwnoPe001dcAdCdeJNDQ1xMqYBwngqiDTH+pVnMEtBfDmMT'
+    
+    ##Loop through desired seasons for game data
+    ct = 0
+    for i in seasons:
+        for j in range(15):
+
+            j = str(j)
+            
+            url_game = 'https://api.collegefootballdata.com/games?year='+i+'&week='+j+'&seasonType=regular'
+        
+            if ct == 0: ##Create initial dataframes
+                gameData, colNames_game = obtainGame_data(url_game,access_token,j)
+                gameDf = createRaw_df(gameData,colNames_game,False)
+            else:
+                gameData, colNames_game = obtainGame_data(url_game,access_token,j)
+                gameDf = appendRaw_df(gameDf,gameData,colNames_game)
+
+            ct += 1
+
+    gameDf.to_csv('D:\College_Football_Model_Data\\gameDf.csv', index = False)
+    #gameDf.to_csv('D:\College_Football_Model_Data\\gameDf2021.csv', index = False)
+
+    ##Loop through desired seasons to obtain stats for each game
+    ct = 0
+    for i in seasons:
+        for j in range(15):
+        #for j in range(9):
+
+            j = str(j+1)
+
+            if ct == 0: ##Create initial dataframe
+                url_stats = 'https://api.collegefootballdata.com/games/teams?year='+i+'&week='+j+'&seasonType=regular'
+                statsData, colNames_stats = obtainStats_data(url_stats,access_token,j)
+                statsDf = createRaw_df(statsData,colNames_stats,False)
+                ct += 1
+            else:
+                url_stats = 'https://api.collegefootballdata.com/games/teams?year='+i+'&week='+j+'&seasonType=regular'
+                statsData, colNames_stats = obtainStats_data(url_stats,access_token,j)
+                statsDf = appendRaw_df(statsDf,statsData,colNames_stats)
+
+    statsDf['completion_attempts'] = statsDf['completion_attempts'].astype(str) ##Column displayed unique date behavior (should be string)
+
+    statsDf.to_csv('D:\College_Football_Model_Data\\statsDf.csv', index = False)
+    #statsDf.to_csv('D:\College_Football_Model_Data\\statsDf2021.csv', index = False)
+
+    ##Create dataframe housing all FBS team information
+    url_team = 'https://api.collegefootballdata.com/teams/fbs'
+    teamData, colNames_team = obtainTeam_data(url_team,access_token)
+    teamDf = createRaw_df(teamData,colNames_team,False)
+    teamDf.to_csv('D:\College_Football_Model_Data\\teamDf.csv', index = False)
 
 
