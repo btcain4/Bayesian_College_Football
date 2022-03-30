@@ -3,22 +3,22 @@
 # Author: Brian Cain
 
 # The purpose of this script is to define functions that handle
-# all pulls from the datasource https://collegefootballdata.com/.
-# This includes api authorization/requests, dataframe creation,
-# datafile creation, and data specification.
+# all pulls from the API datasource https://collegefootballdata.com/.
+# This includes api authentication/requests, dataframe creation,
+# datafile creation, and data specification (selecting what raw data is needed).
 
 ##Import packages necessary for pulling in data and data storage creation
 import requests
 import pandas as pd
 
 
-##Define function to grab api data from CollegeFootballData.com
+##Define function to grab api data from CollegeFootballData.com and authenticate
 def getData(url,access_token):
 
     resp = requests.get(url,
                         headers={'Authorization':'Bearer {}'.format(access_token)})
 
-    ##Assess if the data pull worked correcltly (if not trigger API error code)
+    ##Assess if the data pull worked correctly (if not trigger API error code)
     if resp.status_code == 200:
         apiData = resp.json()
         return apiData
@@ -27,7 +27,7 @@ def getData(url,access_token):
 
 ##FUNCTIONS CREATING/EDITING DATAFRAMES----------
 
-##Define function that creates a dataframe for raw data to be entered into (Applies to first API pull)
+##Define function that creates a dataframe for raw data to be entered into (Applies to first API pull for a dataset)
 def createRaw_df(data,colNames,dataTypes):
 
     ##Assemble data types and corresponding columns
@@ -42,7 +42,7 @@ def createRaw_df(data,colNames,dataTypes):
 
     return df
 
-##Define function that appends raw data to existing dataframe (Applies to all succeeding API pulls)
+##Define function that appends raw data to existing dataframe (Applies to all succeeding API pulls for a dataset)
 def appendRaw_df(originalDf,data,colNames):
 
     ##Create new dataframe with new data and stack it onto original ddataframe
@@ -51,7 +51,7 @@ def appendRaw_df(originalDf,data,colNames):
 
     return newDf
 
-##FUNCTIONS PULLING IN VARIOUS DATAPOINTS----------
+##FUNCTIONS PULLING IN VARIOUS DATAPOINTS FOR DATASET CREATION----------
 
 
 ##Define function that pulls in data on individual FBS teams
@@ -201,35 +201,37 @@ def obtainMetrics_data(url,access_token,week_num):
         offensive_secondLevelYards = i['offense']['secondLevelYards']
         offensive_openFieldYards = i['offense']['openFieldYards']
         
-        defensive_plays = i['defensive']['plays']
-        defensive_drives = i['defensive']['drives']
-        defensive_ppa = i['defensive']['ppa']
-        defensive_successRate = i['defensive']['successRate']
-        defensive_explosiveness = i['defensive']['explosiveness']
-        defensive_powerSuccess = i['defensive']['powerSuccess']
-        defensive_stuffRate = i['defensive']['stuffRate']
-        defensive_lineYards = i['defensive']['lineYards']
-        defensive_secondLevelYards = i['defensive']['secondLevelYards']
-        defensive_openFieldYards = i['defensive']['openFieldYards']
+        defensive_plays = i['defense']['plays']
+        defensive_drives = i['defense']['drives']
+        defensive_ppa = i['defense']['ppa']
+        defensive_successRate = i['defense']['successRate']
+        defensive_explosiveness = i['defense']['explosiveness']
+        defensive_powerSuccess = i['defense']['powerSuccess']
+        defensive_stuffRate = i['defense']['stuffRate']
+        defensive_lineYards = i['defense']['lineYards']
+        defensive_secondLevelYards = i['defense']['secondLevelYards']
+        defensive_openFieldYards = i['defense']['openFieldYards']
 
-        data = [gameId,school,week_num,offensive_plays,offensive_drives,offensive_ppa,offensive_successRate,offensive_explosiveness,
+        data = [gameId,week_num,school,offensive_plays,offensive_drives,offensive_ppa,offensive_successRate,offensive_explosiveness,
                 offensive_powerSuccess,offensive_stuffRate,offensive_lineYards,offensive_secondLevelYards,offensive_openFieldYards,
                 defensive_plays,defensive_drives,defensive_ppa,defensive_successRate,defensive_explosiveness,
                 defensive_powerSuccess,defensive_stuffRate,defensive_lineYards,defensive_secondLevelYards,defensive_openFieldYards]
         metricsData.append(data)
 
-    colNames_metrics = ['gameId','school','week_num','offensive_plays','offensive_drives','offensive_ppa','offensive_successRate','offensive_explosiveness',
+    colNames_metrics = ['gameId','week_num','school','offensive_plays','offensive_drives','offensive_ppa','offensive_successRate','offensive_explosiveness',
                 'offensive_powerSuccess','offensive_stuffRate','offensive_lineYards','offensive_secondLevelYards','offensive_openFieldYards',
                 'defensive_plays','defensive_drives','defensive_ppa','defensive_successRate','defensive_explosiveness',
                 'defensive_powerSuccess','defensive_stuffRate','defensive_lineYards','defensive_secondLevelYards','defensive_openFieldYards']
     
     return metricsData, colNames_metrics
 
-##Invoke Commands to be run for initial setup of first dataframe dating from 2016-2019 (excludes 2020 for covid uncertainty)
+##RUN INITIAL DATAPULLS TO CREATE MODELING DATASETS USING FUNCTIONALITY ABOVE------------------------
+
+##Invoke Commands to be run for initial setup of first dataframe dating from 2015-2021 (excludes 2020 for covid uncertainty)
 if __name__ == '__main__':
 
     ##Define desired game seasons for data
-    seasons = ['2021']
+    seasons = ['2015','2016','2017','2018','2019','2021']
 
     ##Define college football API access token
     access_token = 'u4vJ9lDynYocZefociwnoPe001dcAdCdeJNDQ1xMqYBwngqiDTH+pVnMEtBfDmMT'
@@ -237,9 +239,9 @@ if __name__ == '__main__':
     ##Loop through desired seasons for game data
     ct = 0
     for i in seasons:
-        for j in range(15):
+        for j in range(15): ##15 weeks in regular season
 
-            j = str(j)
+            j = str(j+1)
             
             url_game = 'https://api.collegefootballdata.com/games?year='+i+'&week='+j+'&seasonType=regular'
         
@@ -251,32 +253,51 @@ if __name__ == '__main__':
                 gameDf = appendRaw_df(gameDf,gameData,colNames_game)
 
             ct += 1
-
+    
     gameDf.to_csv('D:\College_Football_Model_Data\\gameDf.csv', index = False)
-    #gameDf.to_csv('D:\College_Football_Model_Data\\gameDf2021.csv', index = False)
 
     ##Loop through desired seasons to obtain stats for each game
     ct = 0
     for i in seasons:
         for j in range(15):
-        #for j in range(9):
 
             j = str(j+1)
 
-            if ct == 0: ##Create initial dataframe
+            if ct == 0: ##Create initial dataframe (createRaw_df function)
                 url_stats = 'https://api.collegefootballdata.com/games/teams?year='+i+'&week='+j+'&seasonType=regular'
                 statsData, colNames_stats = obtainStats_data(url_stats,access_token,j)
                 statsDf = createRaw_df(statsData,colNames_stats,False)
                 ct += 1
-            else:
+            else: ##(appendRaw_df function)
                 url_stats = 'https://api.collegefootballdata.com/games/teams?year='+i+'&week='+j+'&seasonType=regular'
                 statsData, colNames_stats = obtainStats_data(url_stats,access_token,j)
                 statsDf = appendRaw_df(statsDf,statsData,colNames_stats)
 
     statsDf['completion_attempts'] = statsDf['completion_attempts'].astype(str) ##Column displayed unique date behavior (should be string)
+    statsDf['penalty_yards'] = statsDf['penalty_yards'].astype(str)
+    statsDf['fourthDown_eff'] = statsDf['fourthDown_eff'].astype(str)
+    statsDf['thirdDown_eff'] = statsDf['thirdDown_eff'].astype(str)
 
     statsDf.to_csv('D:\College_Football_Model_Data\\statsDf.csv', index = False)
-    #statsDf.to_csv('D:\College_Football_Model_Data\\statsDf2021.csv', index = False)
+
+    ##Loop through desired seasons to obtain metrics for each game
+    ct = 0
+    for i in seasons:
+        for j in range(15):
+
+            j = str(j+1)
+
+            if ct == 0: ##Create initial dataframe (createRaw_df function)
+                url_metrics = 'https://api.collegefootballdata.com/stats/game/advanced?year='+i+'&week='+j
+                metricsData, colNames_metrics = obtainMetrics_data(url_metrics,access_token,j)
+                metricsDf = createRaw_df(metricsData,colNames_metrics,False)
+                ct += 1
+            else: ##(appendRaw_df function)
+                url_metrics = 'https://api.collegefootballdata.com/stats/game/advanced?year='+i+'&week='+j
+                metricsData, colNames_metrics = obtainMetrics_data(url_metrics,access_token,j)
+                metricsDf = appendRaw_df(metricsDf,metricsData,colNames_metrics)
+
+    metricsDf.to_csv('D:\College_Football_Model_Data\\metricsDf.csv', index = False)
 
     ##Create dataframe housing all FBS team information
     url_team = 'https://api.collegefootballdata.com/teams/fbs'
