@@ -37,7 +37,7 @@ def join_data(statsDf,gameDf,metricsDf,teamDf):
                          right_on=['gameId','id']))
 
     ##Remove duplicated columns
-    joinedDf = joinedDf.drop(columns=['homeBool_y','week_num_y','gameSeason','id','school_y'])
+    joinedDf = joinedDf.drop(columns=['homeBool_y','week_num_y','week_num','id','school_y'])
     joinedDf = joinedDf.rename(columns={'homeBool_x': 'homeBool', 'week_num_x': 'week_num',
                                         'school_x': 'school'})
 

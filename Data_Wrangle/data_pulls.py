@@ -190,6 +190,7 @@ def obtainMetrics_data(url,access_token,week_num):
         gameId = i['gameId']
         school = i['team']
 
+        ##NOTE: all defensive metrics are just the opposing teams offensive metrics
         offensive_plays = i['offense']['plays']
         offensive_drives = i['offense']['drives']
         offensive_ppa = i['offense']['ppa']
@@ -200,28 +201,13 @@ def obtainMetrics_data(url,access_token,week_num):
         offensive_lineYards = i['offense']['lineYards']
         offensive_secondLevelYards = i['offense']['secondLevelYards']
         offensive_openFieldYards = i['offense']['openFieldYards']
-        
-        defensive_plays = i['defense']['plays']
-        defensive_drives = i['defense']['drives']
-        defensive_ppa = i['defense']['ppa']
-        defensive_successRate = i['defense']['successRate']
-        defensive_explosiveness = i['defense']['explosiveness']
-        defensive_powerSuccess = i['defense']['powerSuccess']
-        defensive_stuffRate = i['defense']['stuffRate']
-        defensive_lineYards = i['defense']['lineYards']
-        defensive_secondLevelYards = i['defense']['secondLevelYards']
-        defensive_openFieldYards = i['defense']['openFieldYards']
 
         data = [gameId,week_num,school,offensive_plays,offensive_drives,offensive_ppa,offensive_successRate,offensive_explosiveness,
-                offensive_powerSuccess,offensive_stuffRate,offensive_lineYards,offensive_secondLevelYards,offensive_openFieldYards,
-                defensive_plays,defensive_drives,defensive_ppa,defensive_successRate,defensive_explosiveness,
-                defensive_powerSuccess,defensive_stuffRate,defensive_lineYards,defensive_secondLevelYards,defensive_openFieldYards]
+                offensive_powerSuccess,offensive_stuffRate,offensive_lineYards,offensive_secondLevelYards,offensive_openFieldYards]
         metricsData.append(data)
 
     colNames_metrics = ['gameId','week_num','school','offensive_plays','offensive_drives','offensive_ppa','offensive_successRate','offensive_explosiveness',
-                'offensive_powerSuccess','offensive_stuffRate','offensive_lineYards','offensive_secondLevelYards','offensive_openFieldYards',
-                'defensive_plays','defensive_drives','defensive_ppa','defensive_successRate','defensive_explosiveness',
-                'defensive_powerSuccess','defensive_stuffRate','defensive_lineYards','defensive_secondLevelYards','defensive_openFieldYards']
+                'offensive_powerSuccess','offensive_stuffRate','offensive_lineYards','offensive_secondLevelYards','offensive_openFieldYards']
     
     return metricsData, colNames_metrics
 
