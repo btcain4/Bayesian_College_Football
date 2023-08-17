@@ -220,7 +220,7 @@ if __name__ == '__main__':
     seasons = ['2015','2016','2017','2018','2019','2021']
 
     ##Define college football API access token
-    access_token = 'u4vJ9lDynYocZefociwnoPe001dcAdCdeJNDQ1xMqYBwngqiDTH+pVnMEtBfDmMT'
+    access_token = '' ## Left blank for security purposes.
     
     ##Loop through desired seasons for game data
     ct = 0
